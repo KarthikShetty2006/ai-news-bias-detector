@@ -1,0 +1,36 @@
+:root {
+
+  --background: #f8fafc;
+
+  --surface: #ffffff;
+
+  --surface-alt: #fcfdff;
+
+  --text: #0f172a;
+
+  --text-secondary: #64748b;
+
+  --primary: #2563eb;
+
+  --primary-dark: #1d4ed8;
+
+  --border: #e2e8f0;
+
+  --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+
+  --hero-gradient:
+    linear-gradient(
+      135deg,
+      #f8fafc 0%,
+      #eef4ff 50%,
+      #f5f3ff 100%
+    );
+
+  --button-gradient:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #4f46e5
+    );
+
+}
