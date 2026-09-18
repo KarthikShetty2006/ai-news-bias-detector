@@ -12,6 +12,9 @@ import PageHeader from "../../components/common/PageHeader";
 import SearchInput from "../../components/ui/SearchInput";
 import EmptyState from "../../components/ui/EmptyState";
 import Card from "../../components/ui/Card";
+import {
+  getAnalyzedArticles,
+} from "../../services/mlService";
 
 function formatDate(date) {
   if (!date) return "";
@@ -259,41 +262,89 @@ function AnalyzedArticleCard({ article }) {
 }
 
 export default function AnalyzedNews() {
-  const [articles, setArticles] = useState([]);
-  const [search, setSearch] = useState("");
 
-  /*
-   * Only load articles that were explicitly
-   * analyzed from the Analyze page.
-   */
+  const [articles, setArticles] =
+    useState([]);
+
+  const [search, setSearch] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+
+  /* =================================================
+     Load analyzed articles from backend
+  ================================================= */
+
   useEffect(() => {
-    try {
-      const saved = JSON.parse(
-        sessionStorage.getItem(
-          "analyzedNews"
-        ) || "[]"
-      );
 
-      setArticles(
-        Array.isArray(saved)
-          ? saved
-          : []
-      );
-    } catch (error) {
-      console.error(
-        "Unable to load analyzed news:",
-        error
-      );
+    const loadAnalyzedArticles =
+      async () => {
 
-      setArticles([]);
-    }
+        try {
+
+          setLoading(true);
+          setError("");
+
+          const response =
+            await getAnalyzedArticles();
+
+          if (!response?.success) {
+
+            throw new Error(
+              response?.message ||
+              "Unable to load analyzed news."
+            );
+
+          }
+
+          setArticles(
+            Array.isArray(
+              response.articles
+            )
+              ? response.articles
+              : []
+          );
+
+        } catch (err) {
+
+          console.error(
+            "Unable to load analyzed news:",
+            err
+          );
+
+          setError(
+            err?.response?.data?.message ||
+            err?.message ||
+            "Unable to load analyzed news."
+          );
+
+          setArticles([]);
+
+        } finally {
+
+          setLoading(false);
+
+        }
+      };
+
+
+    loadAnalyzedArticles();
+
   }, []);
 
-  /*
-   * Search only the manually analyzed articles.
-   */
+
+  /* =================================================
+     Search
+  ================================================= */
+
   const filteredArticles =
     articles.filter((article) => {
+
       const query =
         search.trim().toLowerCase();
 
@@ -305,14 +356,18 @@ export default function AnalyzedNews() {
         article.title
           ?.toLowerCase()
           .includes(query) ||
+
         article.description
           ?.toLowerCase()
           .includes(query) ||
+
         article.publisher
           ?.toLowerCase()
           .includes(query)
       );
+
     });
+
 
   return (
     <main className="py-12 md:py-16">
@@ -325,7 +380,11 @@ export default function AnalyzedNews() {
           description="News articles you have submitted for AI analysis."
         />
 
+
+        {/* Search */}
+
         <div className="mt-8 w-full max-w-xl">
+
           <SearchInput
             value={search}
             onChange={(event) =>
@@ -335,44 +394,108 @@ export default function AnalyzedNews() {
             }
             placeholder="Search analyzed news..."
           />
+
         </div>
+
+
+        {/* Content */}
 
         <section className="mt-10">
 
-          {filteredArticles.length ===
-            0 && (
-            <EmptyState
-              title={
-                search
-                  ? "No analyzed news found"
-                  : "No analyzed news yet"
-              }
-              description={
-                search
-                  ? "Try another search."
-                  : "Copy an article from All News, analyze it, and it will appear here."
-              }
-            />
-          )}
+          {/* Loading */}
 
-          {filteredArticles.length >
-            0 && (
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
-
-              {filteredArticles.map(
-                (article, index) => (
-                  <AnalyzedArticleCard
-                    key={
-                      article._id ||
-                      `${article.url}-${index}`
-                    }
-                    article={article}
-                  />
-                )
-              )}
-
+          {loading && (
+            <div
+              className="
+                flex
+                min-h-[250px]
+                items-center
+                justify-center
+              "
+            >
+              <p className="text-sm text-slate-500">
+                Loading analyzed news...
+              </p>
             </div>
           )}
+
+
+          {/* Error */}
+
+          {!loading && error && (
+            <div
+              className="
+                rounded-2xl
+                border
+                border-red-200
+                bg-red-50
+                px-5
+                py-4
+                text-sm
+                text-red-600
+              "
+            >
+              {error}
+            </div>
+          )}
+
+
+          {/* Empty */}
+
+          {!loading &&
+            !error &&
+            filteredArticles.length === 0 && (
+              <EmptyState
+                title={
+                  search
+                    ? "No analyzed news found"
+                    : "No analyzed news yet"
+                }
+                description={
+                  search
+                    ? "Try another search."
+                    : "Copy an article from All News, analyze it, and it will appear here."
+                }
+              />
+            )}
+
+
+          {/* Articles */}
+
+          {!loading &&
+            !error &&
+            filteredArticles.length > 0 && (
+
+              <div
+                className="
+                  grid
+                  grid-cols-1
+                  gap-8
+                  md:grid-cols-2
+                  xl:grid-cols-3
+                "
+              >
+
+                {filteredArticles.map(
+                  (
+                    article,
+                    index
+                  ) => (
+
+                    <AnalyzedArticleCard
+                      key={
+                        article._id ||
+                        `${article.url}-${index}`
+                      }
+                      article={article}
+                    />
+
+                  )
+                )}
+
+              </div>
+
+            )}
 
         </section>
 

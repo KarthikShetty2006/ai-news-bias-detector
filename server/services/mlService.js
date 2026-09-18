@@ -80,3 +80,11 @@ export const analyzeArticle = async (text) => {
 
 };
 */
+export const getAnalyzedArticles = async () => {
+
+  const response = await api.get(
+    "predict/analyzed"
+  );
+
+  return response.data;
+};

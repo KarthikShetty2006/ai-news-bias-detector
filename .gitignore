@@ -60,3 +60,9 @@ coverage/
 # Temporary files
 tmp/
 temp/
+# ML datasets
+ml-service/training/datasets/political_bias/raw/
+ml-service/training/datasets/political_bias/processed/
+
+# Trained ML models
+ml-service/training/models/

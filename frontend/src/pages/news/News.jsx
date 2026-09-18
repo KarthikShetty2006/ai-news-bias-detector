@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 
 import Container from "../../components/layout/Container";
-import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/ui/EmptyState";
 import Loader from "../../components/ui/Loader";
 import Card from "../../components/ui/Card";
@@ -25,40 +24,28 @@ import {
 } from "../../services/newsService";
 
 
-/* ---------------------------------------------
+/* =========================================================
    Helpers
---------------------------------------------- */
+========================================================= */
 
 function formatDate(date) {
-  if (!date) {
+  if (!date) return "";
+
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
     return "";
   }
 
-  const parsedDate =
-    new Date(date);
-
-  if (
-    Number.isNaN(
-      parsedDate.getTime()
-    )
-  ) {
-    return "";
-  }
-
-  return parsedDate.toLocaleDateString(
-    "en-IN",
-    {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }
-  );
+  return parsedDate.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 
-function buildArticleText(
-  article
-) {
+function buildArticleText(article) {
   return [
     article.title,
     article.description,
@@ -69,117 +56,99 @@ function buildArticleText(
 }
 
 
-/* ---------------------------------------------
+/* =========================================================
    News Card
---------------------------------------------- */
+========================================================= */
 
-function NewsCard({
-  article,
-}) {
-  const [copied, setCopied] =
-    useState(false);
+function NewsCard({ article }) {
+  const [copied, setCopied] = useState(false);
 
+  const handleCopyToAnalyze = async () => {
+    const articleText = buildArticleText(article);
 
-  const handleCopyToAnalyze =
-    async () => {
-      const articleText =
-        buildArticleText(
-          article
-        );
+    if (!articleText.trim()) {
+      return;
+    }
 
-      if (
-        !articleText.trim()
-      ) {
-        return;
-      }
+    try {
+      await navigator.clipboard.writeText(articleText);
 
-      try {
-        /*
-         * Copy only this article.
-         */
-        await navigator.clipboard.writeText(
-          articleText
-        );
+      sessionStorage.setItem(
+        "newsToAnalyze",
+        articleText
+      );
 
+      sessionStorage.setItem(
+        "newsToAnalyzeMeta",
+        JSON.stringify({
+          title: article.title || "",
+          description: article.description || "",
+          content: article.content || "",
+          publisher:
+            article.publisher ||
+            article.author ||
+            "",
+          author: article.author || "",
+          image: article.image || "",
+          url: article.url || "",
+          publishedAt:
+            article.publishedAt || "",
+        })
+      );
 
-        /*
-         * Store selected article
-         * for Analyze page.
-         */
-        sessionStorage.setItem(
-          "newsToAnalyze",
-          articleText
-        );
+      setCopied(true);
 
+      window.setTimeout(() => {
+        setCopied(false);
+      }, 2000);
 
-        /*
-         * Store metadata of ONLY
-         * this article.
-         */
-        sessionStorage.setItem(
-          "newsToAnalyzeMeta",
-          JSON.stringify({
-            title:
-              article.title ||
-              "",
-
-            description:
-              article.description ||
-              "",
-
-            content:
-              article.content ||
-              "",
-
-            publisher:
-              article.publisher ||
-              article.author ||
-              "",
-
-            author:
-              article.author ||
-              "",
-
-            image:
-              article.image ||
-              "",
-
-            url:
-              article.url ||
-              "",
-
-            publishedAt:
-              article.publishedAt ||
-              "",
-          })
-        );
-
-
-        setCopied(true);
-
-        window.setTimeout(
-          () => {
-            setCopied(false);
-          },
-          2000
-        );
-      } catch (error) {
-        console.error(
-          "Unable to copy article:",
-          error
-        );
-      }
-    };
+    } catch (error) {
+      console.error(
+        "Unable to copy article:",
+        error
+      );
+    }
+  };
 
 
   return (
-    <Card className="group flex h-full flex-col overflow-hidden p-0">
+    <article
+      className="
+        group
+        flex
+        h-full
+        min-w-0
+        flex-col
+        overflow-hidden
+        rounded-2xl
+        border
+        border-slate-200/80
+        bg-white
+        shadow-[0_4px_20px_rgba(15,23,42,0.05)]
+        transition-all
+        duration-300
+        hover:-translate-y-1
+        hover:border-slate-300
+        hover:shadow-[0_14px_35px_rgba(15,23,42,0.10)]
+      "
+    >
 
-      {/* ---------------------------------------
+      {/* =====================================================
           Image
-      --------------------------------------- */}
+      ====================================================== */}
 
-      <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100">
+      <div
+        className="
+          relative
+          aspect-[16/9]
+          w-full
+          overflow-hidden
+          bg-gradient-to-br
+          from-slate-100
+          via-indigo-50
+          to-purple-50
+        "
+      >
 
         {article.image ? (
           <img
@@ -188,49 +157,120 @@ function NewsCard({
               article.title ||
               "News article"
             }
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
-            onError={(
-              event
-            ) => {
+            className="
+              h-full
+              w-full
+              object-cover
+              transition-transform
+              duration-500
+              ease-out
+              group-hover:scale-[1.04]
+            "
+            onError={(event) => {
               event.currentTarget.style.display =
                 "none";
             }}
           />
         ) : (
-          <div className="flex h-full items-center justify-center">
-            <span className="text-sm font-medium text-indigo-400">
+          <div
+            className="
+              flex
+              h-full
+              items-center
+              justify-center
+              bg-gradient-to-br
+              from-indigo-50
+              via-white
+              to-purple-50
+            "
+          >
+            <div
+              className="
+                rounded-xl
+                border
+                border-white/80
+                bg-white/70
+                px-4
+                py-2
+                text-sm
+                font-semibold
+                text-indigo-500
+                shadow-sm
+              "
+            >
               AI News
-            </span>
+            </div>
           </div>
         )}
+
+        {/* Image overlay */}
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-x-0
+            bottom-0
+            h-20
+            bg-gradient-to-t
+            from-black/20
+            to-transparent
+            opacity-0
+            transition-opacity
+            duration-300
+            group-hover:opacity-100
+          "
+        />
 
       </div>
 
 
-      {/* ---------------------------------------
+      {/* =====================================================
           Content
-      --------------------------------------- */}
+      ====================================================== */}
 
-      <div className="flex flex-1 flex-col p-6">
+      <div
+        className="
+          flex
+          flex-1
+          flex-col
+          p-5
+          sm:p-6
+        "
+      >
 
-        {/* Publisher */}
+        {/* Publisher / Date */}
 
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <div
+          className="
+            flex
+            min-h-5
+            items-center
+            gap-2
+            text-xs
+            text-slate-400
+          "
+        >
 
-          {(
-            article.publisher ||
-            article.author
-          ) && (
-            <span className="font-medium text-slate-700">
-              {article.publisher ||
-                article.author}
-            </span>
+          {(article.publisher ||
+            article.author) && (
+            <>
+              <span
+                className="
+                  max-w-[65%]
+                  truncate
+                  font-semibold
+                  text-slate-600
+                "
+              >
+                {article.publisher ||
+                  article.author}
+              </span>
+            </>
           )}
 
-          {(
-            article.publisher ||
-            article.author
-          ) &&
+          {(article.publisher ||
+            article.author) &&
             article.publishedAt && (
               <span className="text-slate-300">
                 •
@@ -250,7 +290,20 @@ function NewsCard({
 
         {/* Title */}
 
-        <h2 className="mt-3 line-clamp-2 text-lg font-semibold leading-7 text-slate-900">
+        <h2
+          className="
+            mt-3
+            line-clamp-2
+            min-h-[3.5rem]
+            text-[17px]
+            font-bold
+            leading-7
+            tracking-[-0.01em]
+            text-slate-900
+            transition-colors
+            group-hover:text-indigo-600
+          "
+        >
           {article.title ||
             "Untitled article"}
         </h2>
@@ -258,41 +311,93 @@ function NewsCard({
 
         {/* Description */}
 
-        {article.description && (
-          <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-500">
-            {article.description}
-          </p>
-        )}
+        <div className="mt-3 flex-1">
+
+          {article.description ? (
+            <p
+              className="
+                line-clamp-3
+                text-sm
+                leading-6
+                text-slate-500
+              "
+            >
+              {article.description}
+            </p>
+          ) : (
+            <p
+              className="
+                text-sm
+                leading-6
+                text-slate-400
+              "
+            >
+              No description available
+              for this article.
+            </p>
+          )}
+
+        </div>
+
+
+        {/* Divider */}
+
+        <div className="my-5 h-px bg-slate-100" />
 
 
         {/* Actions */}
 
-        <div className="mt-auto flex flex-wrap gap-3 pt-6">
+        <div
+          className="
+            flex
+            items-center
+            gap-2
+          "
+        >
 
-          {/* Copy */}
+          {/* Copy / Analyze */}
 
           <button
             type="button"
-            onClick={
-              handleCopyToAnalyze
-            }
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-4 text-sm font-medium text-white shadow-sm transition hover:opacity-95"
+            onClick={handleCopyToAnalyze}
+            className="
+              inline-flex
+              h-10
+              flex-1
+              items-center
+              justify-center
+              gap-2
+              rounded-xl
+              bg-gradient-to-r
+              from-indigo-600
+              to-purple-600
+              px-3
+              text-sm
+              font-semibold
+              text-white
+              shadow-sm
+              shadow-indigo-200
+              transition-all
+              duration-200
+              hover:-translate-y-0.5
+              hover:shadow-md
+              hover:shadow-indigo-200
+              active:translate-y-0
+            "
           >
+
             {copied ? (
               <>
-                <Check
-                  size={16}
-                />
+                <Check size={16} />
                 Copied
               </>
             ) : (
               <>
-                <Copy
-                  size={16}
-                />
-                Copy to Analyze
+                <Copy size={16} />
+                Analyze
               </>
             )}
+
           </button>
 
 
@@ -300,18 +405,35 @@ function NewsCard({
 
           {article.url && (
             <a
-              href={
-                article.url
-              }
+              href={article.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+              className="
+                inline-flex
+                h-10
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                border
+                border-slate-200
+                bg-white
+                px-4
+                text-sm
+                font-semibold
+                text-slate-600
+                transition-all
+                duration-200
+                hover:border-slate-300
+                hover:bg-slate-50
+                hover:text-slate-900
+              "
             >
-              Read
+              <span className="hidden sm:inline">
+                Read
+              </span>
 
-              <ExternalLink
-                size={15}
-              />
+              <ExternalLink size={15} />
             </a>
           )}
 
@@ -319,78 +441,47 @@ function NewsCard({
 
       </div>
 
-    </Card>
+    </article>
   );
 }
 
 
-/* ---------------------------------------------
+/* =========================================================
    News Page
---------------------------------------------- */
+========================================================= */
 
 export default function News() {
 
-  /*
-   * Articles currently displayed.
-   */
   const [articles, setArticles] =
     useState([]);
 
-
-  /*
-   * Search input.
-   */
   const [keyword, setKeyword] =
     useState("");
 
-
-  /*
-   * Current fresh search.
-   */
   const [activeSearch, setActiveSearch] =
     useState("");
 
-
-  /*
-   * Current page.
-   */
   const [page, setPage] =
     useState(1);
 
-
-  /*
-   * MongoDB total pages.
-   */
   const [totalPages, setTotalPages] =
     useState(1);
 
-
-  /*
-   * Loading stored news.
-   */
   const [loading, setLoading] =
     useState(true);
 
-
-  /*
-   * Loading fresh GNews.
-   */
   const [
     searchingNews,
     setSearchingNews,
   ] = useState(false);
 
-
-  /*
-   * Error.
-   */
   const [error, setError] =
     useState("");
 
 
-  /* -------------------------------------------
+  /* =========================================================
      Load Previously Stored News
-  ------------------------------------------- */
+  ========================================================= */
 
   const loadStoredNews =
     useCallback(
@@ -398,26 +489,21 @@ export default function News() {
         search = "",
         pageNumber = 1
       ) => {
+
         try {
+
           setLoading(true);
-
           setError("");
-
 
           const response =
             await getArticles({
               page: pageNumber,
-
               limit: 12,
-
               search:
                 search.trim() ||
                 undefined,
-
-              sort:
-                "-publishedAt",
+              sort: "-publishedAt",
             });
-
 
           const storedArticles =
             Array.isArray(
@@ -426,35 +512,28 @@ export default function News() {
               ? response.articles
               : [];
 
-
           setArticles(
             storedArticles
           );
-
 
           setPage(
             response?.page ||
               pageNumber
           );
 
-
           setTotalPages(
             response?.totalPages ||
               1
           );
 
-
-          /*
-           * We are back to stored news.
-           */
           setActiveSearch("");
 
         } catch (err) {
+
           console.error(
             "Failed to load stored news:",
             err
           );
-
 
           setError(
             err?.response?.data
@@ -462,103 +541,108 @@ export default function News() {
               "Unable to load news."
           );
 
-
           setArticles([]);
 
         } finally {
+
           setLoading(false);
+
         }
       },
       []
     );
 
 
-  /* -------------------------------------------
-     Fetch NEW News From GNews
-  ------------------------------------------- */
+  /* =========================================================
+     Fetch New News From GNews
+  ========================================================= */
 
-const searchNewNews = useCallback(
-  async (
-    searchKeyword,
-    pageNumber = 1
-  ) => {
-    try {
-      setSearchingNews(true);
-      setError("");
+  const searchNewNews =
+    useCallback(
+      async (
+        searchKeyword,
+        pageNumber = 1
+      ) => {
 
-      const response =
-        await fetchFreshNews(
-          searchKeyword,
-          pageNumber
-        );
+        try {
 
-      const freshArticles =
-        Array.isArray(
-          response?.articles
-        )
-          ? response.articles
-          : [];
+          setSearchingNews(true);
+          setError("");
 
-      setArticles(
-        freshArticles
-      );
+          const response =
+            await fetchFreshNews(
+              searchKeyword,
+              pageNumber
+            );
 
-      setActiveSearch(
-        searchKeyword
-      );
+          const freshArticles =
+            Array.isArray(
+              response?.articles
+            )
+              ? response.articles
+              : [];
 
-      setPage(
-        pageNumber
-      );
-    } catch (err) {
-      console.error(
-        "Failed to fetch new news:",
-        err
-      );
+          setArticles(
+            freshArticles
+          );
 
-      setError(
-        err?.response?.data
-          ?.message ||
-          "Unable to fetch new news."
-      );
+          setActiveSearch(
+            searchKeyword
+          );
 
-      setArticles([]);
-    } finally {
-      setSearchingNews(false);
-    }
-  },
-  []
-);
+          setPage(
+            pageNumber
+          );
+
+        } catch (err) {
+
+          console.error(
+            "Failed to fetch new news:",
+            err
+          );
+
+          setError(
+            err?.response?.data
+              ?.message ||
+              "Unable to fetch new news."
+          );
+
+          setArticles([]);
+
+        } finally {
+
+          setSearchingNews(false);
+
+        }
+      },
+      []
+    );
 
 
-  /* -------------------------------------------
-     Initial Page Load
-     
-     IMPORTANT:
-     Only MongoDB.
-     NO GNews.
-     NO ML.
-  ------------------------------------------- */
+  /* =========================================================
+     Initial Load
+  ========================================================= */
 
   useEffect(() => {
+
     loadStoredNews(
       "",
       1
     );
+
   }, [
     loadStoredNews,
   ]);
 
 
-  /* -------------------------------------------
-     Search Previously Stored News
-  ------------------------------------------- */
+  /* =========================================================
+     Search Stored News
+  ========================================================= */
 
   const handleStoredSearch =
     (event) => {
 
       event.preventDefault();
-
 
       loadStoredNews(
         keyword,
@@ -567,60 +651,54 @@ const searchNewNews = useCallback(
     };
 
 
-  /* -------------------------------------------
-     Search NEW News
-  ------------------------------------------- */
+  /* =========================================================
+     Search New News
+  ========================================================= */
 
   const handleSearchNewNews = () => {
-  const searchKeyword =
-    keyword.trim() || "technology";
 
-  // Always start fresh search from page 1
-  setPage(1);
-  setActiveSearch(searchKeyword);
+    const searchKeyword =
+      keyword.trim() ||
+      "technology";
 
-  searchNewNews(
-    searchKeyword,
-    1
-  );
-};
+    setPage(1);
+    setActiveSearch(
+      searchKeyword
+    );
+
+    searchNewNews(
+      searchKeyword,
+      1
+    );
+  };
 
 
-  /* -------------------------------------------
+  /* =========================================================
      Refresh
-  ------------------------------------------- */
+  ========================================================= */
 
-  const handleRefresh =
-    () => {
+  const handleRefresh = () => {
 
-      if (
-        activeSearch
-      ) {
-        /*
-         * Refresh fresh GNews.
-         */
-        searchNewNews(
-          activeSearch,
-          page
-        );
+    if (activeSearch) {
 
-        return;
-      }
-
-
-      /*
-       * Refresh stored articles.
-       */
-      loadStoredNews(
-        keyword,
+      searchNewNews(
+        activeSearch,
         page
       );
-    };
+
+      return;
+    }
+
+    loadStoredNews(
+      keyword,
+      page
+    );
+  };
 
 
-  /* -------------------------------------------
+  /* =========================================================
      Stored Pagination
-  ------------------------------------------- */
+  ========================================================= */
 
   const handlePreviousStored =
     () => {
@@ -631,7 +709,6 @@ const searchNewNews = useCallback(
       ) {
         return;
       }
-
 
       loadStoredNews(
         keyword,
@@ -650,7 +727,6 @@ const searchNewNews = useCallback(
         return;
       }
 
-
       loadStoredNews(
         keyword,
         page + 1
@@ -658,9 +734,9 @@ const searchNewNews = useCallback(
     };
 
 
-  /* -------------------------------------------
-     Fresh GNews Pagination
-  ------------------------------------------- */
+  /* =========================================================
+     Fresh News Pagination
+  ========================================================= */
 
   const handlePreviousFresh =
     () => {
@@ -671,7 +747,6 @@ const searchNewNews = useCallback(
       ) {
         return;
       }
-
 
       searchNewNews(
         activeSearch,
@@ -686,7 +761,6 @@ const searchNewNews = useCallback(
       if (searchingNews) {
         return;
       }
-
 
       searchNewNews(
         activeSearch,
@@ -704,309 +778,676 @@ const searchNewNews = useCallback(
     searchingNews;
 
 
-  /* -------------------------------------------
+  /* =========================================================
      Render
-  ------------------------------------------- */
+  ========================================================= */
 
   return (
-    <main className="py-12 md:py-16">
+    <main
+      className="
+        min-h-screen
+        bg-slate-50/60
+        py-8
+        sm:py-10
+        lg:py-12
+      "
+    >
 
       <Container>
 
-        {/* Header */}
+        <div
+          className="
+            mx-auto
+            w-full
+            max-w-7xl
+          "
+        >
 
-        <PageHeader
-          eyebrow="News Library"
-          title="All News"
-          description="Browse previously fetched news or search the news API for fresh articles."
-        />
+          {/* =================================================
+              Header
+          ================================================= */}
+
+          <header
+            className="
+              border-b
+              border-slate-200/80
+              pb-7
+            "
+          >
+
+            <div
+              className="
+                flex
+                flex-col
+                gap-2
+              "
+            >
+
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  text-sm
+                  font-semibold
+                  text-indigo-600
+                "
+              >
+                <span
+                  className="
+                    h-1.5
+                    w-1.5
+                    rounded-full
+                    bg-indigo-600
+                  "
+                />
+
+                News Library
+              </div>
+
+              <h1
+                className="
+                  text-3xl
+                  font-bold
+                  tracking-[-0.03em]
+                  text-slate-950
+                  sm:text-4xl
+                  lg:text-[42px]
+                "
+              >
+                All News
+              </h1>
+
+              <p
+                className="
+                  max-w-2xl
+                  text-sm
+                  leading-6
+                  text-slate-500
+                  sm:text-base
+                "
+              >
+                Browse previously fetched
+                articles or discover fresh
+                stories from the news API.
+              </p>
+
+            </div>
+
+          </header>
 
 
-        {/* -------------------------------------
-            Search Area
-        ------------------------------------- */}
+          {/* =================================================
+              Search Panel
+          ================================================= */}
 
-        <div className="mt-8 w-full max-w-3xl">
+          {/* =================================================
+    Search Panel
+================================================= */}
 
-          <div className="flex flex-col gap-3 sm:flex-row">
+<section
+  className="
+    mt-7
+    w-full
+    rounded-2xl
+    border
+    border-slate-200
+    bg-white
+    p-4
+    shadow-[0_4px_20px_rgba(15,23,42,0.04)]
+    sm:p-5
+  "
+>
+  <form onSubmit={handleStoredSearch}>
 
-            {/* Search input */}
+    <div
+      className="
+        flex
+        w-full
+        flex-col
+        gap-3
+        lg:flex-row
+        lg:items-center
+      "
+    >
 
-            <div className="relative flex-1">
+      {/* Search Input */}
 
-              <Search
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
+      <div className="relative min-w-0 flex-1">
+  <div
+    className="
+      flex
+      h-12
+      w-full
+      items-center
+      rounded-xl
+      border
+      border-slate-200
+      bg-slate-50
+      transition-all
+      hover:border-slate-300
+      focus-within:border-indigo-400
+      focus-within:bg-white
+      focus-within:ring-4
+      focus-within:ring-indigo-100
+    "
+  >
+    <Search
+      size={18}
+      strokeWidth={2}
+      className="
+        ml-4
+        mr-3
+        shrink-0
+        text-slate-400
+      "
+    />
 
-              <input
-                type="text"
-                value={keyword}
-                onChange={(
-                  event
-                ) =>
-                  setKeyword(
-                    event.target.value
-                  )
-                }
-                onKeyDown={(
-                  event
-                ) => {
-                  if (
-                    event.key ===
-                    "Enter"
-                  ) {
-                    handleSearchNewNews();
-                  }
-                }}
-                placeholder="Enter a topic..."
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-              />
+    <input
+      type="text"
+      value={keyword}
+      onChange={(event) =>
+        setKeyword(event.target.value)
+      }
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleSearchNewNews();
+        }
+      }}
+      placeholder="Search news by topic..."
+      className="
+        h-full
+        min-w-0
+        flex-1
+        bg-transparent
+        pr-4
+        text-sm
+        font-medium
+        text-slate-800
+        outline-none
+        placeholder:text-slate-400
+      "
+    />
+  </div>
+</div>
+
+
+      {/* Search Stored */}
+
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="
+          inline-flex
+          h-12
+          shrink-0
+          items-center
+          justify-center
+          whitespace-nowrap
+          rounded-xl
+          bg-gradient-to-r
+          from-indigo-600
+          to-purple-600
+          px-6
+          text-sm
+          font-semibold
+          text-white
+          shadow-md
+          shadow-indigo-200
+          transition-all
+          duration-200
+          hover:-translate-y-0.5
+          hover:shadow-lg
+          hover:shadow-indigo-200
+          disabled:cursor-not-allowed
+          disabled:opacity-50
+        "
+      >
+        Search Stored
+      </button>
+
+
+      {/* Search New News */}
+
+      <button
+        type="button"
+        onClick={handleSearchNewNews}
+        disabled={isLoading}
+        className="
+          inline-flex
+          h-12
+          shrink-0
+          items-center
+          justify-center
+          gap-2
+          whitespace-nowrap
+          rounded-xl
+          bg-gradient-to-r
+          from-indigo-600
+          to-purple-600
+          px-6
+          text-sm
+          font-semibold
+          text-white
+          shadow-md
+          shadow-indigo-200
+          transition-all
+          duration-200
+          hover:-translate-y-0.5
+          hover:shadow-lg
+          hover:shadow-indigo-200
+          disabled:cursor-not-allowed
+          disabled:opacity-50
+        "
+      >
+
+        <Sparkles size={17} />
+
+        {searchingNews
+          ? "Fetching..."
+          : "Search New News"}
+
+      </button>
+
+    </div>
+
+  </form>
+</section>
+
+
+          {/* =================================================
+              Results Toolbar
+          ================================================= */}
+
+          <div
+            className="
+              mt-8
+              flex
+              flex-col
+              gap-4
+              sm:flex-row
+              sm:items-center
+              sm:justify-between
+            "
+          >
+
+            <div className="min-w-0">
+
+              {showingFreshNews ? (
+                <div
+                  className="
+                    flex
+                    min-w-0
+                    flex-wrap
+                    items-center
+                    gap-2
+                  "
+                >
+
+                  <span
+                    className="
+                      inline-flex
+                      items-center
+                      gap-2
+                      rounded-full
+                      bg-indigo-50
+                      px-3
+                      py-1.5
+                      text-xs
+                      font-bold
+                      text-indigo-600
+                    "
+                  >
+                    <span
+                      className="
+                        h-1.5
+                        w-1.5
+                        rounded-full
+                        bg-indigo-500
+                      "
+                    />
+
+                    Fresh News
+                  </span>
+
+                  <span className="text-sm text-slate-400">
+                    Results for
+                  </span>
+
+                  <span
+                    className="
+                      max-w-[240px]
+                      truncate
+                      text-sm
+                      font-semibold
+                      text-slate-700
+                    "
+                  >
+                    "{activeSearch}"
+                  </span>
+
+                </div>
+              ) : (
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-3
+                  "
+                >
+
+                  <h2
+                    className="
+                      text-lg
+                      font-bold
+                      tracking-[-0.01em]
+                      text-slate-900
+                    "
+                  >
+                    Previously Fetched News
+                  </h2>
+
+                  {articles.length > 0 && (
+                    <span
+                      className="
+                        rounded-full
+                        bg-slate-100
+                        px-2.5
+                        py-1
+                        text-xs
+                        font-semibold
+                        text-slate-500
+                      "
+                    >
+                      {articles.length}
+                    </span>
+                  )}
+
+                </div>
+              )}
 
             </div>
 
 
-            {/* Search Stored */}
+            {/* Refresh */}
 
             <button
               type="button"
-              onClick={
-                handleStoredSearch
-              }
-              disabled={
-                isLoading
-              }
-              className="h-11 shrink-0 rounded-xl border border-slate-200 bg-white px-5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              title="Refresh"
+              className="
+                inline-flex
+                h-10
+                w-10
+                shrink-0
+                items-center
+                justify-center
+                self-start
+                rounded-xl
+                border
+                border-slate-200
+                bg-white
+                text-slate-500
+                shadow-sm
+                transition-all
+                hover:border-slate-300
+                hover:bg-slate-50
+                hover:text-slate-900
+                sm:self-auto
+              "
             >
-              Search Stored
+
+              <RefreshCw
+                size={16}
+                className={
+                  isLoading
+                    ? "animate-spin"
+                    : ""
+                }
+              />
+
             </button>
 
           </div>
 
 
-          {/* Search New News */}
+          {/* =================================================
+              Content
+          ================================================= */}
 
-          <button
-            type="button"
-            onClick={
-              handleSearchNewNews
-            }
-            disabled={
-              isLoading
-            }
-            className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-5 text-sm font-medium text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <section className="mt-6">
 
-            <Sparkles
-              size={17}
-            />
+            {/* Loading */}
 
-            {searchingNews
-              ? "Fetching New News..."
-              : "Search New News"}
-
-          </button>
-
-        </div>
-
-
-        {/* -------------------------------------
-            Status
-        ------------------------------------- */}
-
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-
-          {showingFreshNews ? (
-            <>
-              <span className="rounded-full bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-3 py-1 text-sm font-medium text-indigo-600">
-                Fresh News
-              </span>
-
-              <span className="text-sm text-slate-500">
-                Results for
-              </span>
-
-              <span className="text-sm font-medium text-slate-700">
-                "{activeSearch}"
-              </span>
-            </>
-          ) : (
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">
-              Previously Fetched News
-            </span>
-          )}
-
-
-          {/* Refresh */}
-
-          <button
-            type="button"
-            onClick={
-              handleRefresh
-            }
-            disabled={
-              isLoading
-            }
-            title="Refresh"
-            className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-
-            <RefreshCw
-              size={16}
-              className={
-                isLoading
-                  ? "animate-spin"
-                  : ""
-              }
-            />
-
-          </button>
-
-        </div>
-
-
-        {/* -------------------------------------
-            News
-        ------------------------------------- */}
-
-        <section className="mt-8">
-
-          {/* Loading */}
-
-          {isLoading && (
-            <Loader
-              text={
-                searchingNews
-                  ? "Fetching new news..."
-                  : "Loading saved news..."
-              }
-            />
-          )}
-
-
-          {/* Error */}
-
-          {!isLoading &&
-            error && (
-              <EmptyState
-                title="Unable to load news"
-                description={
-                  error
-                }
-              />
+            {isLoading && (
+              <div
+                className="
+                  rounded-2xl
+                  border
+                  border-slate-200
+                  bg-white
+                  py-16
+                "
+              >
+                <Loader
+                  text={
+                    searchingNews
+                      ? "Fetching new news..."
+                      : "Loading saved news..."
+                  }
+                />
+              </div>
             )}
 
 
-          {/* Empty */}
+            {/* Error */}
 
-          {!isLoading &&
-            !error &&
-            articles.length ===
-              0 && (
-              <EmptyState
-                title="No news found"
-                description={
-                  showingFreshNews
-                    ? "Try another topic."
-                    : "There are no previously fetched articles yet. Search for new news to get started."
-                }
-              />
-            )}
-
-
-          {/* Cards */}
-
-          {!isLoading &&
-            !error &&
-            articles.length >
-              0 && (
-              <>
-
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
-
-                  {articles.map(
-                    (
-                      article,
-                      index
-                    ) => (
-                      <NewsCard
-                        key={
-                          article._id ||
-                          article.url ||
-                          `${article.title}-${index}`
-                        }
-                        article={
-                          article
-                        }
-                      />
-                    )
-                  )}
-
+            {!isLoading &&
+              error && (
+                <div
+                  className="
+                    rounded-2xl
+                    border
+                    border-red-100
+                    bg-white
+                    p-6
+                  "
+                >
+                  <EmptyState
+                    title="Unable to load news"
+                    description={error}
+                  />
                 </div>
+              )}
 
 
-                {/* --------------------------------
-                    Pagination
-                -------------------------------- */}
+            {/* Empty */}
 
-                <div className="mt-12 flex items-center justify-center gap-3">
-
-                  {/* Previous */}
-
-                  <button
-                    type="button"
-                    disabled={
-                      page <= 1 ||
-                      isLoading
-                    }
-                    onClick={
+            {!isLoading &&
+              !error &&
+              articles.length === 0 && (
+                <div
+                  className="
+                    rounded-2xl
+                    border
+                    border-dashed
+                    border-slate-300
+                    bg-white
+                    p-10
+                    sm:p-16
+                  "
+                >
+                  <EmptyState
+                    title="No news found"
+                    description={
                       showingFreshNews
-                        ? handlePreviousFresh
-                        : handlePreviousStored
+                        ? "Try another topic."
+                        : "There are no previously fetched articles yet. Search for new news to get started."
                     }
-                    className="h-10 rounded-xl border border-slate-200 bg-white px-5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  />
+                </div>
+              )}
+
+
+            {/* Cards */}
+
+            {!isLoading &&
+              !error &&
+              articles.length > 0 && (
+                <>
+
+                  <div
+                    className="
+                      grid
+                      grid-cols-1
+                      gap-5
+                      sm:gap-6
+                      md:grid-cols-2
+                      xl:grid-cols-3
+                    "
                   >
-                    Previous
-                  </button>
 
+                    {articles.map(
+                      (
+                        article,
+                        index
+                      ) => (
+                        <NewsCard
+                          key={
+                            article._id ||
+                            article.url ||
+                            `${article.title}-${index}`
+                          }
+                          article={
+                            article
+                          }
+                        />
+                      )
+                    )}
 
-                  {/* Current Page */}
-
-                  <div className="flex h-10 min-w-10 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-4 text-sm font-medium text-white shadow-sm">
-                    {page}
                   </div>
 
 
-                  {/* Next */}
+                  {/* =================================================
+                      Pagination
+                  ================================================= */}
 
-                  <button
-                    type="button"
-                    disabled={
-                      isLoading ||
-                      (
-                        showingFreshNews
-                          ? articles.length <
-                            10
-                          : page >=
-                            totalPages
-                      )
-                    }
-                    onClick={
-                      showingFreshNews
-                        ? handleNextFresh
-                        : handleNextStored
-                    }
-                    className="h-10 rounded-xl border border-slate-200 bg-white px-5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  <div
+                    className="
+                      mt-10
+                      flex
+                      items-center
+                      justify-center
+                      gap-2
+                      border-t
+                      border-slate-200
+                      pt-7
+                    "
                   >
-                    Next
-                  </button>
 
-                </div>
+                    {/* Previous */}
 
-              </>
-            )}
+                    <button
+                      type="button"
+                      disabled={
+                        page <= 1 ||
+                        isLoading
+                      }
+                      onClick={
+                        showingFreshNews
+                          ? handlePreviousFresh
+                          : handlePreviousStored
+                      }
+                      className="
+                        h-10
+                        rounded-xl
+                        border
+                        border-slate-200
+                        bg-white
+                        px-4
+                        text-sm
+                        font-semibold
+                        text-slate-600
+                        transition-all
+                        hover:border-slate-300
+                        hover:bg-slate-50
+                        disabled:cursor-not-allowed
+                        disabled:opacity-40
+                      "
+                    >
+                      Previous
+                    </button>
 
-        </section>
+
+                    {/* Current Page */}
+
+                    <div
+                      className="
+                        flex
+                        h-10
+                        min-w-10
+                        items-center
+                        justify-center
+                        rounded-xl
+                        bg-slate-900
+                        px-3
+                        text-sm
+                        font-bold
+                        text-white
+                        shadow-sm
+                      "
+                    >
+                      {page}
+                    </div>
+
+
+                    {/* Next */}
+
+                    <button
+                      type="button"
+                      disabled={
+                        isLoading ||
+                        (
+                          showingFreshNews
+                            ? articles.length < 10
+                            : page >= totalPages
+                        )
+                      }
+                      onClick={
+                        showingFreshNews
+                          ? handleNextFresh
+                          : handleNextStored
+                      }
+                      className="
+                        h-10
+                        rounded-xl
+                        border
+                        border-slate-200
+                        bg-white
+                        px-4
+                        text-sm
+                        font-semibold
+                        text-slate-600
+                        transition-all
+                        hover:border-slate-300
+                        hover:bg-slate-50
+                        disabled:cursor-not-allowed
+                        disabled:opacity-40
+                      "
+                    >
+                      Next
+                    </button>
+
+                  </div>
+
+                </>
+              )}
+
+          </section>
+
+        </div>
 
       </Container>
 
